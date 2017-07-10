@@ -1,0 +1,58 @@
+<html> 
+
+<head>
+    <title>Kvizovi</title>
+    <link rel="stylesheet" href="/RWA_projekat/kviz.css"/>   
+</head>
+
+<body> 
+
+
+    <div id="kviz" style="margin-right: 60px; width: auto;">
+	<h1 align="center">Rezultati</h1>
+		<table id="listaKvizova"> 
+		
+		</table>
+	
+	</div>
+
+</body>
+
+</html>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	ucitajRezultate();
+});
+
+	
+    function ucitajRezultate() {
+    	var xhr = new XMLHttpRequest();
+
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState != 4 || xhr.responseText == null || xhr.responseText == "") return;
+		if(xhr.status === 200) {
+			var response = JSON.parse(xhr.responseText);
+			var rezultatiContainer = document.getElementById("listaKvizova");
+			var rezultati = "";
+			for(var i in response)
+			{
+				var rezultat = response[i];				
+				var rb = parseInt(i) + 1;
+				rezultati += "<tr><th>" + rb + ". " + rezultat.email + " - (kviz: " + rezultat.kviz +
+			    "<span style='margin-left: 30px; float: right'> bodovi: " + rezultat.bodovi + "</span>)" +
+			    "</th></tr><br>"			    
+			}
+			rezultatiContainer.innerHTML = rezultati;			
+			return;
+		} 
+	};
+
+	xhr.open("GET", "http://localhost:8080/RWA_projekat/api/rezultati");
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.send();	
+
+}
+</script>

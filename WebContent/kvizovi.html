@@ -1,0 +1,206 @@
+<html> 
+
+<head>
+    <title>Kvizovi</title>
+    <link rel="stylesheet" href="/RWA_projekat/kviz.css"/>   
+</head>
+
+<body> 
+
+
+    <div id="kviz">
+	<h1 align="center">Dodavanje novog kviza</h1>
+		<table id="listaKvizova"> 
+		<tr>
+			<th> Naziv: </th>
+			<th> <input type="text" id="nazivText" size="40" required> </th>
+		</tr>
+		<tr>
+			<th> Aktivan: </th>
+			<th> <input type="checkbox" id="activeCheck" size="40"required> </th>
+		</tr>
+		
+		<tr> <th colspan="2"> <input  onclick="kreiratiNoviKviz()" type="button" value="Dodaj kviz" /> </th> </tr>
+		</table>
+	
+	</div>
+	
+	<div id="pitanjaZaKviz">
+		<h1 align="center">Trenutni kvizovi</h1>
+		<div id="kvizoviContainer" style="height: 200px; overflow: scroll;">
+		</div>
+    </div>
+
+
+</body>
+
+</html>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	ucitajKvizove();
+});
+
+	function kreiratiNoviKviz() {
+		var naziv = document.getElementById("nazivText").value;
+		if(naziv == null || naziv === "") {
+			alert("Naziv ne moze biti prazan.");
+			return;
+		}
+		
+		var active = document.getElementById("activeCheck").checked;
+		
+	    var xhr = new XMLHttpRequest();
+
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState != 4 || xhr.responseText == null || xhr.responseText == "") return;
+			if(xhr.status === 200) {
+				console.log(xhr.responseText);
+	           	var response = JSON.parse(xhr.responseText);
+	           	if (response!=null && response["status"]==1) {
+	           		document.getElementById("nazivText").value = "";
+	           		document.getElementById("activeCheck").checked = false;
+	           		ucitajKvizove();
+	           	} else {
+	           		alert("Dogodila se greska");
+	           	}		
+	           	return;
+			} else {
+				var error = "Dogodila se greska";
+				if(xhr!=null && xhr.responseText!=null){
+					var response = JSON.parse(xhr.responseText);
+					if (response!=null && response["message"]!=null) {
+						error = response["message"];
+					}
+				}
+				alert(error);
+				return;
+			}
+		};
+
+		xhr.open("POST", "http://localhost:8080/RWA_projekat/admin/api/kvizovi");
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send(JSON.stringify({action: "CREATE", naziv: naziv, active: active}));	
+	}
+
+	function dodajPitanja(kvizId) {
+		window.location = "pitanja?kvizId=" + kvizId;
+	}
+	
+	function obrisatiKviz(kvizId) {
+		var url = "http://localhost:8080/RWA_projekat/admin/api/kvizovi"
+		var xhr = new XMLHttpRequest();
+
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState != 4 || xhr.responseText == null || xhr.responseText == "") return;
+			if(xhr.status === 200) {
+				ucitajKvizove();
+			} else {
+				var error = "Dogodila se greska";
+				if(xhr!=null && xhr.responseText!=null){
+					var response = JSON.parse(xhr.responseText);
+					if (response!=null && response["message"]!=null) {
+						error = response["message"];
+					}
+				}
+				alert(error);
+				return;
+			}
+		};
+
+		xhr.open("POST", url);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send(JSON.stringify({action: "DELETE", kvizId: kvizId}));	
+	}
+	
+	function aktiviraj(kvizId) {
+		var url = "http://localhost:8080/RWA_projekat/admin/api/kvizovi"
+		var xhr = new XMLHttpRequest();
+
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState != 4 || xhr.responseText == null || xhr.responseText == "") return;
+			if(xhr.status === 200) {
+				ucitajKvizove();
+			} else {
+				var error = "Dogodila se greska";
+				if(xhr!=null && xhr.responseText!=null){
+					var response = JSON.parse(xhr.responseText);
+					if (response!=null && response["message"]!=null) {
+						error = response["message"];
+					}
+				}
+				alert(error);
+				return;
+			}
+		};
+
+		xhr.open("POST", url);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send(JSON.stringify({action: "SETACTIVE", kvizId: kvizId}));	
+	}
+
+	function deaktiviraj(kvizId) {
+		var url = "http://localhost:8080/RWA_projekat/admin/api/kvizovi"
+		var xhr = new XMLHttpRequest();
+
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState != 4 || xhr.responseText == null || xhr.responseText == "") return;
+			if(xhr.status === 200) {
+				ucitajKvizove();
+			} else {
+				var error = "Dogodila se greska";
+				if(xhr!=null && xhr.responseText!=null){
+					var response = JSON.parse(xhr.responseText);
+					if (response!=null && response["message"]!=null) {
+						error = response["message"];
+					}
+				}
+				alert(error);
+				return;
+			}
+		};
+
+		xhr.open("POST", url);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send(JSON.stringify({action: "SETINACTIVE", kvizId: kvizId}));	
+	}
+	
+    function ucitajKvizove() {
+    	var xhr = new XMLHttpRequest();
+
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState != 4 || xhr.responseText == null || xhr.responseText == "") return;
+		if(xhr.status === 200) {
+			var response = JSON.parse(xhr.responseText);
+			var kvizoviContainer = document.getElementById("kvizoviContainer");
+			var kvizovi = "";
+			for(var i in response)
+			{
+				var kviz = response[i];				
+				var color = "black";
+				if (kviz.isActive == 0) {
+					color = "gray";
+				}
+				var aktiviraj = "<span onclick='aktiviraj(" + kviz.id + ")' style='float: right; margin-right: 10px;'>Aktiviraj </span>";
+				if (kviz.isActive == 1) {
+					aktiviraj = "<span onclick='deaktiviraj(" + kviz.id + ")' style='float: right; margin-right: 10px;'>Deaktiviraj </span>"
+				}
+			    kvizovi += "<span style='color: " + color + ";'>" + kviz.id + " - " + kviz.naziv + 			    
+			    "<span onclick='obrisatiKviz(" + kviz.id + ")' id='removeKviz" + kviz.id + "' style='float: right;'>Obrisati </span>" +
+			    "<span onclick='dodajPitanja(" + kviz.id + ")' style='float: right; margin-right: 10px;'>Pitanja </span>" +
+			    aktiviraj
+			    + "</span><br>"			    
+			}
+			kvizoviContainer.innerHTML = kvizovi;			
+			return;
+		} 
+	};
+
+	xhr.open("GET", "http://localhost:8080/RWA_projekat/admin/api/kvizovi");
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.send();	
+
+}
+</script>
